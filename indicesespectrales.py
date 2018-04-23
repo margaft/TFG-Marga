@@ -13,20 +13,18 @@ from scipy.interpolate import interp1d
 #t tiempos de vector de raw rr, es decir, el tiempo original en mseg. Si no
 #pasado, se calculará a partir de series temporales de intervalos rr.
 
-def interp_to_psd(rr, t, fs, method):
-    nargin=0;
-    if nargin == 1:
-        t = np.cumsum(rr)/1000;
-        fs = 4; #Hz
-        method = 'spline';
-    elif nargin < 3:
-        fs = 4;
-        method = 'spline';
+def interp_to_psd(rr, t = None, fs = 4., method = 'spline'):
+    
+    #En python el control de parámetros es diferente
+    if t == None:
+        t = np.cumsum(rr)/1000.
+        
 
-    ts = 1/fs;
-    t_new = t[1]:t[end]:ts;
+    ts = 1/fs #sampling frequency
+    
+    t_new = np.arange(t[0],t[-1],ts) #nuevo vector para la interopolacion
     #Interpolacion
-    rr_interp = interp1d(t, rr, t_new, method);
+    rr_interp = interp1d(t, rr, t_new, method)
 
 
 def main_spectral(rr,t = None,duration=5):
