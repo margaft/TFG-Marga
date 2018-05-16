@@ -32,23 +32,26 @@ def interp_to_psd(rr, t = None, fs = 4., method = 'cubic'):
     
     return rr_interp,t_new
 
-def main_spectral(rr,t = None,duration=5):
+def main_spectral(rr,t = None,duration=5,interp_method = 'linear'):
     if t == None:
         t = np.cumsum(rr)/1000.
 
     #Interpolación
     
-    rr_interpolated_4_hz,t_new = interp_to_psd(rr,t)
+    rr_interpolated_4_hz,t_new = interp_to_psd(rr,t,method = interp_method)
     
     return rr_interpolated_4_hz, t_new
 
 
+plt.close('all')
 rr = np.load('rr_example.npy')
 t = np.cumsum(rr)/1000.
-plt.plot(t,rr)
-rr_interpolated, t_new = main_spectral(rr)
+plt.plot(t,rr, label = 'Original')
+rr_interpolated, t_new = main_spectral(rr,interp_method = 'cubic')
 
-plt.plot(t,rr_interpolated)
+plt.plot(t_new,rr_interpolated,label =  'Interpolated')
+
+plt.legend()
 
 
 
