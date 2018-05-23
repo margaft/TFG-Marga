@@ -33,11 +33,11 @@ def Welch_Periodogram(rr, fs = 4., window = 'hanning', nperseg = 256, noverlap =
     rr = rr - np.mean(rr)
     rr = signal.detrend(rr)
     
-    p, f = signal.welch(rr, fs, 'hanning', 256, 128, 1024)
+    p, f = signal.welch(rr, fs, window = window, nperseg = nperseg, noverlap = noverlap, nfft = nfft)
     #p, f = signal.welch(rr, fs, window = 'hanning', nperseg = 256, noverlap = 128, nfft  = 1024)
     
     
-    return rr
+    return p,f
 
 def main_spectral(rr, t = None, duration = 5):
     if t == None:
@@ -49,14 +49,17 @@ def main_spectral(rr, t = None, duration = 5):
     
    # return rr_interpolated_4_hz, t_new
 
-    p, f = Welch_Periodogram(rr,  4., 'hanning', 256, 128, 1024)
+    f, Pxx = Welch_Periodogram(rr,  4., 'hanning', 256, 128, 1024)
     
-    return p, f
+    return Pxx, f
 
-rr = np.loadtxt('rr.txt')
+plt.close('all')
+rr = np.load('rr_example.npy')
 t = np.cumsum(rr)/1000.
 plt.plot(t,rr)
 #rr_interpolated_4_hz, t_new = main_spectral(rr)
 
-p, f = main_spectral(rr)
+Pxx, f = main_spectral(rr)
 
+plt.figure()
+plt.plot(f[f<0.5],Pxx[f<0.5])
