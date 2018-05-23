@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Created on Sun Apr  8 10:35:33 2018
-
 @author: Margaft
 """
 
 import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+from scipy import signal
 
 #Función que calcula los índices espectrales de una serie temporal de intervalo rr
 #Duración 5 minutos o más.
@@ -16,10 +16,7 @@ import matplotlib.pyplot as plt
 
 def interp_to_psd(rr, t = None, fs = 4., method = 'cubic'):
     
-    #En python el control de parámetros es diferente
-    if t == None:
-        t = np.cumsum(rr)/1000.
-        
+  
 
     ts = 1/fs #sampling frequency
     
@@ -32,35 +29,34 @@ def interp_to_psd(rr, t = None, fs = 4., method = 'cubic'):
     
     return rr_interp,t_new
 
-def main_spectral(rr,t = None,duration=5,interp_method = 'linear'):
+def Welch_Periodogram(rr, fs = 4., window = 'hanning', nperseg = 256, noverlap = 128, nfft  = 1024):
+    rr = rr - np.mean(rr)
+    rr = signal.detrend(rr)
+    
+    p, f = signal.welch(rr, fs, 'hanning', 256, 128, 1024)
+    #p, f = signal.welch(rr, fs, window = 'hanning', nperseg = 256, noverlap = 128, nfft  = 1024)
+    
+    
+    return rr
+
+def main_spectral(rr, t = None, duration = 5):
     if t == None:
         t = np.cumsum(rr)/1000.
 
     #Interpolación
     
-    rr_interpolated_4_hz,t_new = interp_to_psd(rr,t,method = interp_method)
+   # rr_interpolated_4_hz,t_new = interp_to_psd(rr,t)
     
-    return rr_interpolated_4_hz, t_new
+   # return rr_interpolated_4_hz, t_new
 
+    p, f = Welch_Periodogram(rr,  4., 'hanning', 256, 128, 1024)
+    
+    return p, f
 
-plt.close('all')
-rr = np.load('rr_example.npy')
+rr = np.loadtxt('rr.txt')
 t = np.cumsum(rr)/1000.
-plt.plot(t,rr, label = 'Original')
-rr_interpolated, t_new = main_spectral(rr,interp_method = 'cubic')
+plt.plot(t,rr)
+#rr_interpolated_4_hz, t_new = main_spectral(rr)
 
-plt.plot(t_new,rr_interpolated,label =  'Interpolated')
-
-plt.legend()
-
-
-
-
-
-
-
-
-
-
-
+p, f = main_spectral(rr)
 
