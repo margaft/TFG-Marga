@@ -29,37 +29,86 @@ def interp_to_psd(rr, t = None, fs = 4., method = 'cubic'):
     
     return rr_interp,t_new
 
-def Welch_Periodogram(rr, fs = 4., window = 'hanning', nperseg = 256, noverlap = 128, nfft  = 1024):
+def Welch_Periodogram(rr, fs = 4., window = 'hamming', nperseg = 256, noverlap = len('hamming')/2, nfft  = 1024):
     rr = rr - np.mean(rr)
     rr = signal.detrend(rr)
     
-    p, f = signal.welch(rr, fs, window = window, nperseg = nperseg, noverlap = noverlap, nfft = nfft)
-    #p, f = signal.welch(rr, fs, window = 'hanning', nperseg = 256, noverlap = 128, nfft  = 1024)
+    f, p = signal.welch(rr, fs, window = window, nperseg = nperseg, noverlap = noverlap, nfft = nfft)
+    #f, p = signal.welch(rr, fs, window = 'hanning', nperseg = 256, noverlap = 128, nfft  = 1024)
     
     
-    return p,f
+    return f, p #p: densidad espectral de potencia
+                #f: vector frecuencia
+             
+#def spectral_indices(Pxx, f, duration = 5):
+#    
+#    if duration == 5:
+#        indVlf = f <= 0.04
+#        indUlf = []
+#    elif duration >= 5:
+#        indUlf = f <= 0.003
+#        indVlf = f > 0.003 & f <= 0.04;
+#        
+#    ind = f <= 0.4
+#    indLf = np.bitwise_and(f > 0.04, f <= 0.15)
+#    indHf = np.bitwise_and(f > 0.15, f <= 0.4)
+#    
+#    df = f[2]
+#    
+#    #Cálculo de la potencia total
+#    Ptot = df * sum(Pxx[ind])
+#    
+#    #Cálculo potencia en la banda ULF
+#    if len(indUlf) == 0:
+#        Pulf = df*sum(Pxx[indUlf]) #En ms^2
+#    else:
+#        Pulf = [];
+#        
+#    #Cálculo potencia en la banda VLF
+#    Pvlf = df*sum(Pxx[indVlf]); 
+#    
+#    #Cálculo potencia en la banda LF
+#    Plf = df*sum(Pxx[indLf]);
+#    
+#    #Cálculo potencia en la banda HF
+#    Phf = df*sum(Pxx[indHf]);
+#    
+#    #Cáculo del ratio LF/HF
+#    lfhf_ratio = Plf/Phf;
+#     
+#    return Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio
 
-def main_spectral(rr, t = None, duration = 5):
+def main_interp(rr, t = None, duration = 5):
     if t == None:
         t = np.cumsum(rr)/1000.
 
     #Interpolación
     
-   # rr_interpolated_4_hz,t_new = interp_to_psd(rr,t)
+    rr_interpolated_4_hz, t_new = interp_to_psd(rr,t)
     
-   # return rr_interpolated_4_hz, t_new
+    return rr_interpolated_4_hz, t_new
 
-    f, Pxx = Welch_Periodogram(rr,  4., 'hanning', 256, 128, 1024)
+def main_welch(rr, t = None, duration = 5):
+    f, Pxx = Welch_Periodogram(rr_interpolated_4_hz,  4., 'hamming', 256, 128, 1024)
     
-    return Pxx, f
+    return f, Pxx
+
+#def main_spectral_indices(rr, t = None, duration = 5):
+#    
+#    Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio = spectral_indices(Pxx, f, duration = 5.)
+#    
+#    return Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio
 
 plt.close('all')
-rr = np.load('rr_example.npy')
+rr = np.loadtxt('rr.txt')
 t = np.cumsum(rr)/1000.
 plt.plot(t,rr)
-#rr_interpolated_4_hz, t_new = main_spectral(rr)
 
-Pxx, f = main_spectral(rr)
+rr_interpolated_4_hz, t_new = main_interp(rr)
+
+f, Pxx = main_welch(rr_interpolated_4_hz)
+
+#Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio = main_spectral_indices(Pxx)
 
 plt.figure()
 plt.plot(f[f<0.5],Pxx[f<0.5])
