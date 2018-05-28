@@ -15,8 +15,6 @@ from scipy import signal
 #pasado, se calculará a partir de series temporales de intervalos rr.
 
 def interp_to_psd(rr, t = None, fs = 4., method = 'cubic'):
-    
-  
 
     ts = 1/fs #sampling frequency
     
@@ -24,59 +22,64 @@ def interp_to_psd(rr, t = None, fs = 4., method = 'cubic'):
     #Interpolacion
     f = interp1d(t, rr, kind = method) #crea el objeto para interpolar
     
-    #ahora realizamos la interpolación realmente
+    #Ahora realizamos la interpolación realmente
     rr_interp = f(t_new)
     
     return rr_interp,t_new
 
-def Welch_Periodogram(rr, fs = 4., window = 'hamming', nperseg = 256, noverlap = len('hamming')/2, nfft  = 1024):
+
+#Función que calcula el periodograma de Welch para el intervalo de tiempo rr
+#dado, que se supone que se interpola en fs
+def Welch_Periodogram(rr, fs = 4., window = 'hamming', nperseg = 256, noverlap = 256/2, nfft  = 1024):
+    
     rr = rr - np.mean(rr)
+    
+    #Eliminar la tendencia lineal a lo largo del eje de datos
     rr = signal.detrend(rr)
     
     f, p = signal.welch(rr, fs, window = window, nperseg = nperseg, noverlap = noverlap, nfft = nfft)
     #f, p = signal.welch(rr, fs, window = 'hanning', nperseg = 256, noverlap = 128, nfft  = 1024)
     
-    
     return f, p #p: densidad espectral de potencia
                 #f: vector frecuencia
              
-#def spectral_indices(Pxx, f, duration = 5):
-#    
-#    if duration == 5:
-#        indVlf = f <= 0.04
-#        indUlf = []
-#    elif duration >= 5:
-#        indUlf = f <= 0.003
-#        indVlf = f > 0.003 & f <= 0.04;
-#        
-#    ind = f <= 0.4
-#    indLf = np.bitwise_and(f > 0.04, f <= 0.15)
-#    indHf = np.bitwise_and(f > 0.15, f <= 0.4)
-#    
-#    df = f[2]
-#    
-#    #Cálculo de la potencia total
-#    Ptot = df * sum(Pxx[ind])
-#    
-#    #Cálculo potencia en la banda ULF
-#    if len(indUlf) == 0:
-#        Pulf = df*sum(Pxx[indUlf]) #En ms^2
-#    else:
-#        Pulf = [];
-#        
-#    #Cálculo potencia en la banda VLF
-#    Pvlf = df*sum(Pxx[indVlf]); 
-#    
-#    #Cálculo potencia en la banda LF
-#    Plf = df*sum(Pxx[indLf]);
-#    
-#    #Cálculo potencia en la banda HF
-#    Phf = df*sum(Pxx[indHf]);
-#    
-#    #Cáculo del ratio LF/HF
-#    lfhf_ratio = Plf/Phf;
-#     
-#    return Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio
+def spectral_indices(Pxx, f, duration = 5):
+    
+    if duration == 5:
+        indVlf = f <= 0.04
+        indUlf = []
+    elif duration >= 5:
+        indUlf = f <= 0.003
+        indVlf = np.bitwise_and(f > 0.003, f <= 0.04);
+        
+    ind = f <= 0.4
+    indLf = np.bitwise_and(f > 0.04, f <= 0.15)
+    indHf = np.bitwise_and(f > 0.15, f <= 0.4)
+    
+    df = f[1]
+    
+    #Cálculo de la potencia total
+    Ptot = df * sum(Pxx[ind])
+    
+    #Cálculo potencia en la banda ULF
+    if len(indUlf) == 0:
+        Pulf = df * sum(Pxx[indUlf]) #En ms^2
+    else:
+        Pulf = [];
+        
+    #Cálculo potencia en la banda VLF
+    Pvlf = df * sum(Pxx[indVlf]); 
+    
+    #Cálculo potencia en la banda LF
+    Plf = df * sum(Pxx[indLf]);
+    
+    #Cálculo potencia en la banda HF
+    Phf = df * sum(Pxx[indHf]);
+    
+    #Cáculo del ratio LF/HF
+    lfhf_ratio = Plf/Phf;
+     
+    return Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio
 
 def main_interp(rr, t = None, duration = 5):
     if t == None:
@@ -93,11 +96,11 @@ def main_welch(rr, t = None, duration = 5):
     
     return f, Pxx
 
-#def main_spectral_indices(rr, t = None, duration = 5):
-#    
-#    Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio = spectral_indices(Pxx, f, duration = 5.)
-#    
-#    return Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio
+def main_spectral_indices(rr, t = None, duration = 5):
+    
+    Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio = spectral_indices(Pxx, f, duration = 5.)
+    
+    return Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio
 
 plt.close('all')
 rr = np.loadtxt('rr.txt')
@@ -108,7 +111,7 @@ rr_interpolated_4_hz, t_new = main_interp(rr)
 
 f, Pxx = main_welch(rr_interpolated_4_hz)
 
-#Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio = main_spectral_indices(Pxx)
+Ptot, Pulf, Pvlf, Plf, Phf, lfhf_ratio = main_spectral_indices(Pxx)
 
 plt.figure()
 plt.plot(f[f<0.5],Pxx[f<0.5])
